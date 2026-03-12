@@ -55,14 +55,15 @@ app.post('/api/shorturl', function(req, res) {
 });
 
 app.get('/api/shorturl/:short_url', function(req, res) {
-  const shortUrl = parseInt(req.params.short_url);
-  const found = urlDatabase.find(item => item.short_url === shortUrl);
+  const shortUrl = parseInt(req.params.short_url, 10);
+  const entry = urlDatabase.find(item => item.short_url === shortUrl);
 
-  if (!found) {
-    return res.status(404).send('Not Found');
+  if (!entry) {
+    return res.json({ error: 'No short URL found for the given input' });
   }
 
-  return res.redirect(found.original_url);
+  // enviar redirección explícita
+  res.status(302).set('Location', entry.original_url).end();
 });
 
 app.listen(port, function() {
