@@ -11,7 +11,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-
 app.use('/public', express.static(`${process.cwd()}/public`));
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -62,8 +61,7 @@ app.get('/api/shorturl/:short_url', function(req, res) {
     return res.json({ error: 'No short URL found for the given input' });
   }
 
-  // enviar redirección explícita
-  res.status(302).set('Location', entry.original_url).end();
+  return res.redirect(entry.original_url);
 });
 
 app.listen(port, function() {
