@@ -1,15 +1,19 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const dns = require('dns');
 const { URL } = require('url');
 
 const app = express();
 
+// Basic Configuration
+const port = process.env.PORT || 3000;
+
 app.use(cors());
+
+app.use('/public', express.static(`${process.cwd()}/public`));
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use('/public', express.static(process.cwd() + '/public'));
 
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
@@ -40,27 +44,27 @@ app.post('/api/shorturl', function(req, res) {
     }
 
     const newEntry = {
-      original_url: original_url,
+      original_url,
       short_url: counter++
     };
 
     urlDatabase.push(newEntry);
 
-    res.json(newEntry);
+    return res.json(newEntry);
   });
 });
 
 app.get('/api/shorturl/:short_url', function(req, res) {
   const shortUrl = parseInt(req.params.short_url);
-  const entry = urlDatabase.find(item => item.short_url === shortUrl);
+  const found = urlDatabase.find(item => item.short_url === shortUrl);
 
-  if (!entry) {
-    return res.json({ error: 'No short URL found for the given input' });
+  if (!found) {
+    return res.status(404).send('Not Found');
   }
 
-  res.redirect(entry.original_url);
+  return res.redirect(found.original_url);
 });
 
-const listener = app.listen(process.env.PORT || 3000, function() {
-  console.log('Your app is listening on port ' + listener.address().port);
+app.listen(port, function() {
+  console.log('Listening on port ' + port);
 });
