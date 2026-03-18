@@ -5,6 +5,7 @@ const dns = require('dns');
 const { URL } = require('url');
 
 const app = express();
+app.set('trust proxy', true);
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -26,6 +27,19 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+// Request Header Parser Microservice
+app.get('/api/whoami', function(req, res) {
+  const ipaddress = req.ip;
+  const language = req.get('Accept-Language');
+  const software = req.get('User-Agent');
+
+  res.json({
+    ipaddress,
+    language,
+    software
+  });
+});
+
 // Crear short URL
 app.post('/api/shorturl', function(req, res) {
   const original_url = req.body.url;
@@ -37,7 +51,6 @@ app.post('/api/shorturl', function(req, res) {
     return res.json({ error: 'invalid url' });
   }
 
-  // Solo http o https
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
     return res.json({ error: 'invalid url' });
   }
@@ -49,7 +62,6 @@ app.post('/api/shorturl', function(req, res) {
       return res.json({ error: 'invalid url' });
     }
 
-    // Revisar si ya existe
     const existing = urlDatabase.find(item => item.original_url === original_url);
     if (existing) {
       return res.json({
@@ -74,7 +86,7 @@ app.post('/api/shorturl', function(req, res) {
 
 // Redireccionar usando short URL
 app.get('/api/shorturl/:short_url', function(req, res) {
-  const shortUrl = parseInt(req.params.short_url);
+  const shortUrl = Number(req.params.short_url);
 
   const entry = urlDatabase.find(item => item.short_url === shortUrl);
 
@@ -82,7 +94,7 @@ app.get('/api/shorturl/:short_url', function(req, res) {
     return res.json({ error: 'No short URL found for the given input' });
   }
 
-  res.redirect(entry.original_url);
+  return res.redirect(entry.original_url);
 });
 
 app.listen(port, function() {
