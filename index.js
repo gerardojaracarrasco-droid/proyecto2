@@ -5,9 +5,7 @@ const dns = require('dns');
 const { URL } = require('url');
 
 const app = express();
-app.set('trust proxy', true);
 
-// Basic Configuration
 const port = process.env.PORT || 3000;
 
 app.use(cors());
@@ -18,29 +16,13 @@ app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
-// Base de datos temporal en memoria
 let urlDatabase = [];
 let counter = 1;
 
-// Ejemplo opcional de FCC
 app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-// Request Header Parser Microservice
-app.get('/api/whoami', function(req, res) {
-  const ipaddress = req.ip;
-  const language = req.get('Accept-Language');
-  const software = req.get('User-Agent');
-
-  res.json({
-    ipaddress,
-    language,
-    software
-  });
-});
-
-// Crear short URL
 app.post('/api/shorturl', function(req, res) {
   const original_url = req.body.url;
 
@@ -77,24 +59,22 @@ app.post('/api/shorturl', function(req, res) {
 
     urlDatabase.push(newEntry);
 
-    res.json({
+    return res.json({
       original_url: newEntry.original_url,
       short_url: newEntry.short_url
     });
   });
 });
 
-// Redireccionar usando short URL
 app.get('/api/shorturl/:short_url', function(req, res) {
   const shortUrl = Number(req.params.short_url);
-
   const entry = urlDatabase.find(item => item.short_url === shortUrl);
 
   if (!entry) {
-    return res.json({ error: 'No short URL found for the given input' });
+    return res.status(404).json({ error: 'No short URL found for the given input' });
   }
 
-  return res.redirect(entry.original_url);
+  return res.redirect(302, entry.original_url);
 });
 
 app.listen(port, function() {
